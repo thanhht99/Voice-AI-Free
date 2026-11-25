@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+.venv/
+.voice-cache/
+.vercel/
+__pycache__/
+node_modules/
+voice-ai-free-vercel.zip
