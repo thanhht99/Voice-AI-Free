@@ -26,6 +26,11 @@
     </div>
   </header>
   <main>
+    <div class="tool-switch" role="group" aria-label="Công cụ">
+      <button id="voice-tool" type="button" aria-pressed="true" aria-controls="voice-view" data-copy="voiceTool">Tạo giọng đọc</button>
+      <button id="media-tool" type="button" aria-pressed="false" aria-controls="media-view" data-copy="mediaTool">Tải MP3 / MP4</button>
+    </div>
+    <div id="voice-view">
     <h1><span data-copy="heading">Tạo giọng đọc</span><span class="heading-dot">.</span></h1>
     <p class="intro" data-copy="intro">Chuyển kịch bản tiếng Việt hoặc tiếng Anh thành giọng đọc cho video và bài thuyết trình.</p>
     <div class="workspace">
@@ -79,9 +84,39 @@
         <p id="status" role="status" aria-live="polite"></p>
       </section>
     </div>
+    </div>
+    <section id="media-view" aria-labelledby="media-heading" hidden>
+      <h1 id="media-heading" data-media-copy="heading">Tải MP3 / MP4</h1>
+      <p class="intro" data-media-copy="intro">Dán liên kết công khai để lưu âm thanh hoặc video. Chỉ tải nội dung ní sở hữu hoặc được phép tải.</p>
+      <div class="editor media-panel">
+        <form id="media-form">
+          <label for="media-url" data-media-copy="urlLabel">Liên kết video hoặc âm thanh</label>
+          <div class="media-url-row">
+            <input id="media-url" type="url" inputmode="url" placeholder="https://…" maxlength="2048" required>
+            <button id="media-analyze" class="secondary" type="submit" data-media-copy="analyze" disabled>Kiểm tra link</button>
+          </div>
+          <p class="media-sources">YouTube, Facebook, Instagram, TikTok, SoundCloud, Vimeo, Dailymotion, X</p>
+        </form>
+        <div id="media-details" hidden>
+          <h2 id="media-title"></h2>
+          <p class="media-sources" id="media-meta"></p>
+          <div class="media-selects">
+            <div class="field"><label for="media-format" data-media-copy="format">Định dạng</label><select id="media-format"></select></div>
+            <div class="field"><label for="media-quality" data-media-copy="quality">Chất lượng</label><select id="media-quality"></select></div>
+          </div>
+          <div class="media-actions">
+            <button id="media-start" class="primary" type="button" data-media-copy="start">Tạo file</button>
+            <button id="media-cancel" class="secondary" type="button" data-media-copy="cancel" hidden>Hủy</button>
+            <a id="media-download" class="primary" rel="noreferrer" hidden data-media-copy="download">Tải file</a>
+          </div>
+        </div>
+        <progress id="media-progress" max="100" aria-label="Tiến trình" hidden></progress>
+        <p id="media-status" role="status" data-media-copy="waiting">Đang kiểm tra máy chủ tải file…</p>
+      </div>
+    </section>
     <footer class="app-footer">
       <span><span data-copy="authorCredit">Tác giả</span> <strong>hoangtienthanh267</strong></span>
-      <span class="release-version">v26.11.001</span>
+      <span class="release-version">v26.11.002</span>
     </footer>
   </main>
   <dialog id="install-dialog" aria-labelledby="install-heading">

@@ -1,14 +1,15 @@
 {
   "name": "voice-studio",
-  "version": "26.11.1",
-  "appVersion": "26.11.001",
+  "version": "26.11.2",
+  "appVersion": "26.11.002",
   "author": "hoangtienthanh267",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
     "dev": "node --watch --env-file-if-exists=.env server.mjs",
-    "voice:setup": "python -m venv --without-pip .venv && python -m pip --python .venv install --cache-dir .voice-cache/pip -r requirements-voice.txt"
+    "voice:setup": "python -m venv --without-pip .venv && python -m pip --python .venv install --cache-dir .voice-cache/pip -r requirements-voice.txt",
+    "media:setup": "python -m venv --without-pip .media-venv && python -m pip --python .media-venv install --cache-dir .media-cache/pip -r requirements-media.txt"
   },
   "engines": { "node": "22.x" }
 }

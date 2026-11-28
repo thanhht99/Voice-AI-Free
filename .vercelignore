@@ -3,6 +3,8 @@
 !.env.example
 .venv/
 .voice-cache/
+.media-cache/
+.media-venv/
 .vercel/
 __pycache__/
 node_modules/

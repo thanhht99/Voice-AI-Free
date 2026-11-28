@@ -1,5 +1,6 @@
 import { locales, maxLength, voices } from './voices.js';
 import { personalVoiceId, setupVoiceProfile } from './voice-profile.js';
+import { setupMedia } from './media.js';
 
 const script = document.querySelector('#script');
 const count = document.querySelector('#count');
@@ -24,6 +25,8 @@ const copy = {
   vi: {
     interfaceLanguage: 'Ngôn ngữ giao diện',
     heading: 'Tạo giọng đọc',
+    voiceTool: 'Tạo giọng đọc',
+    mediaTool: 'Tải MP3 / MP4',
     authorCredit: 'Tác giả',
     intro: 'Chuyển kịch bản tiếng Việt hoặc tiếng Anh thành giọng đọc cho video và bài thuyết trình.',
     script: 'Kịch bản',
@@ -86,6 +89,8 @@ const copy = {
   en: {
     interfaceLanguage: 'Interface language',
     heading: 'Create a voice-over',
+    voiceTool: 'Create a voice-over',
+    mediaTool: 'Download MP3 / MP4',
     authorCredit: 'Project by',
     intro: 'Turn a Vietnamese or English script into a voice-over for videos and presentations.',
     script: 'Script',
@@ -173,6 +178,7 @@ const apiError = {
   503: 'serviceUnavailable'
 };
 const localErrors = new Set(['invalidRequest', 'localUnavailable', 'localBusy', 'localTimeout', 'localError', 'audioTooLarge', 'requestTooLong', 'invalidProfile']);
+const mediaTool = setupMedia(refreshConfig);
 const voiceProfile = setupVoiceProfile({
   onChange() {
     if (voice.value === personalVoiceId) invalidateOutput();
@@ -215,6 +221,7 @@ function renderInterface() {
   }
   script.placeholder = t('placeholder');
   voiceProfile.setLanguage(uiLanguage);
+  mediaTool.setLanguage(uiLanguage);
   showStatus(statusKey);
   updateVoices();
 }
@@ -310,6 +317,7 @@ async function refreshConfig() {
     const result = await fetch('/api/config', { cache: 'no-store' });
     if (!result.ok) return;
     const config = await result.json();
+    mediaTool.setAvailable(config.mediaDownloads === true);
     const nextCloud = Boolean(config.configured);
     const nextLocalState = config.localState || 'disabled';
     const nextPersonalVoice = config.personalVoice === true;
@@ -324,7 +332,10 @@ async function refreshConfig() {
       invalidateOutput();
       updateControls();
     }
-  } catch { /* Keep the currently selected device voice available offline. */ }
+  } catch {
+    mediaTool.setAvailable(false);
+    /* Keep the currently selected device voice available offline. */
+  }
   finally {
     if (localState === 'loading') configTimer = setTimeout(refreshConfig, 2500);
   }

@@ -57,6 +57,41 @@ export async function configHandler(request, response) {
   });
 }
 
+export async function mediaHandler(request, response) {
+  if (request.method !== 'POST') return json(response, 405, {}, { Allow: 'POST' });
+  if (request.headers['sec-fetch-site'] === 'cross-site' ||
+    (request.headers.origin && request.headers.origin !== `https://${request.headers.host}`)) {
+    return json(response, 403, { code: 'mediaUnavailable' });
+  }
+  if (request.headers['content-type']?.split(';')[0] !== 'application/json') {
+    return json(response, 415, { code: 'invalidRequest' });
+  }
+  if (Number(request.headers['content-length']) > 8192) return json(response, 413, { code: 'invalidRequest' });
+  let body;
+  try {
+    const data = request.body;
+    if (!['analyze', 'start', 'status', 'cancel'].includes(data?.action)) throw new Error('Bad request');
+    body = JSON.stringify(data);
+  } catch { return json(response, 400, { code: 'invalidRequest' }); }
+  if (Buffer.byteLength(body) > 8192) return json(response, 413, { code: 'invalidRequest' });
+  const backend = backendSettings();
+  if (backend.state !== 'configured') return json(response, 503, { code: 'mediaUnavailable' });
+  try {
+    const upstream = await callBackend(backend, '/api/media', AbortSignal.timeout(65_000), body);
+    if (upstream.status === 401 || upstream.status === 403 ||
+      (upstream.status === 404 && !upstream.headers.get('content-type')?.includes('json'))) {
+      await upstream.body?.cancel();
+      return json(response, 503, { code: 'mediaUnavailable' });
+    }
+    const result = await upstream.json();
+    if (result.file) {
+      if (!/^\/api\/media\/file\/[a-f0-9-]{36}$/.test(result.file)) throw new Error('Invalid file path');
+      result.file = new URL(result.file, backend.origin).href;
+    }
+    return json(response, upstream.status, result);
+  } catch { return json(response, 502, { code: 'mediaUnavailable' }); }
+}
+
 export async function speechHandler(request, response) {
   if (request.method !== 'POST') return json(response, 405, {}, { Allow: 'POST' });
   if (request.headers['content-type']?.split(';')[0] !== 'application/json') {

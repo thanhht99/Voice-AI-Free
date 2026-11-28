@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { timingSafeEqual } from 'node:crypto';
 import { locales, maxLength, voices } from './public/voices.js';
 import { createVoiceProfile, localVoiceConfig, startLocalVoice, synthesizeLocalVoice } from './local-voice.mjs';
+import { downloadMedia, mediaAction, mediaInstalled, mediaPublicEnabled, mediaToolsReady } from './media-service.mjs';
 
 const key = process.env.AZURE_SPEECH_KEY?.trim();
 const region = process.env.AZURE_SPEECH_REGION?.trim();
@@ -21,6 +22,7 @@ const assets = new Map([
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/voice-profile.js', ['voice-profile.js', 'text/javascript; charset=utf-8']],
+  ['/media.js', ['media.js', 'text/javascript; charset=utf-8']],
   ['/voices.js', ['voices.js', 'text/javascript; charset=utf-8']],
   ['/sw.js', ['sw.js', 'text/javascript; charset=utf-8']],
   ['/manifest.webmanifest', ['manifest.webmanifest', 'application/manifest+json']],
@@ -46,6 +48,32 @@ function profileOnThisOrigin(request) {
 
 function profilePostAllowed(request) {
   return profileOnThisOrigin(request) && request.headers.origin === `http://${request.headers.host}`;
+}
+
+function mediaAllowed(request) {
+  return backendAuthorization
+    ? mediaPublicEnabled() && authorized(request)
+    : mediaInstalled() && profileOnThisOrigin(request);
+}
+
+async function handleMedia(request, response) {
+  if (!mediaAllowed(request) || (!backendAuthorization && !profilePostAllowed(request))) {
+    return json(response, 403, { code: 'mediaUnavailable' });
+  }
+  if (request.headers['content-type']?.split(';')[0] !== 'application/json') {
+    return json(response, 415, { code: 'invalidRequest' });
+  }
+  let data;
+  try {
+    const buffer = await readBody(request, 8192);
+    if (!buffer) return json(response, 413, { code: 'invalidRequest' });
+    data = JSON.parse(buffer.toString('utf8'));
+  } catch {
+    if (!response.destroyed) json(response, 400, { code: 'invalidRequest' });
+    return;
+  }
+  const result = await mediaAction(data);
+  if (!response.destroyed) return json(response, result.status, result.data);
 }
 
 async function readBody(request, limit) {
@@ -171,7 +199,15 @@ const server = createServer(async (request, response) => {
   }
   if (request.method === 'GET' && path === '/api/config') {
     const local = localVoiceConfig();
-    return json(response, 200, { configured, ...local, personalVoice: local.personalVoice && profileOnThisOrigin(request) });
+    return json(response, 200, { configured, ...local, personalVoice: local.personalVoice && profileOnThisOrigin(request),
+      mediaDownloads: mediaAllowed(request) && await mediaToolsReady() });
+  }
+  if (request.method === 'POST' && path === '/api/media') return handleMedia(request, response);
+  const mediaFile = /^\/api\/media\/file\/([a-f0-9-]{36})$/.exec(path || '');
+  if (request.method === 'GET' && mediaFile) {
+    const available = backendAuthorization ? mediaPublicEnabled() : mediaInstalled() && profileOnThisOrigin(request);
+    if (available && await downloadMedia(mediaFile[1], response)) return;
+    return json(response, 404, { code: 'expiredMedia' });
   }
   if (request.method === 'POST' && path === '/api/voice-profile') return enrollProfile(request, response);
   if (request.method === 'POST' && path === '/api/speech') return synthesize(request, response);

@@ -5,7 +5,8 @@
   "outputDirectory": "public",
   "functions": {
     "api/config.js": { "maxDuration": 10 },
-    "api/speech.js": { "maxDuration": 300 }
+    "api/speech.js": { "maxDuration": 300 },
+    "api/media.js": { "maxDuration": 75 }
   },
   "headers": [
     {

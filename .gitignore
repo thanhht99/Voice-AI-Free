@@ -6,4 +6,6 @@ voice-ai-free-vercel.zip
 node_modules/
 .venv/
 .voice-cache/
+.media-cache/
+.media-venv/
 __pycache__/

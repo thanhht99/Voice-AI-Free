@@ -1,5 +1,5 @@
-const cacheName = 'voice-studio-26.11.001-3';
-const assets = ['/', '/styles.css', '/app.js', '/voices.js', '/voice-profile.js', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
+const cacheName = 'voice-studio-26.11.002-1';
+const assets = ['/', '/styles.css', '/app.js', '/voices.js', '/voice-profile.js', '/media.js', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)));
